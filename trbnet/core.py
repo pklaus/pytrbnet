@@ -28,7 +28,7 @@ trb_errno_dict = {0: 'TRB_NONE', 1: 'TRB_TX_BUSY', 2: 'TRB_FIFO_NOT_EMPTY',
                   41: 'TRB_TRB3_INVALID_UDP_HEADER'}
 
 
-class PyTRB(object):
+class TrbNet(object):
     '''
     Wrapper class for trbnet access using python
     '''
