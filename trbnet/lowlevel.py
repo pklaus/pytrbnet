@@ -12,7 +12,7 @@ class _TrbNet(object):
     Wrapper class for trbnet access using python
     '''
 
-    def __init__(self, daqopserver='', trb3_server='', libtrbnet='libtrbnet.so', buffersize=4194304):
+    def __init__(self, libtrbnet=None, daqopserver=None, trb3_server=None, buffersize=4194304):
         '''
         Constructor for the low level TrbNet class.
         Loads the shared library (libtrbnet), sets enviromental variables and initialises ports.
@@ -20,21 +20,30 @@ class _TrbNet(object):
         Depending on the version of libtrbnet.so used, the connection to TrbNet is established
         either by directly connecting to a TRB board (trbnettools/libtrbnet/libtrbnet.so) or
         by connecting to a trbnet daemon instance (if trbnettools/trbnetd/libtrbnet.so is used).
+        Selecting the library can happen by:
+        - Specifying the full path to the library via the libtrbnet keyword argument.
+        - Specifying the full path to the library via the environment variable LIBTRBNET.
+        - Adding the directory, libtrbnet.so resides in to the environment variable LD_LIBRARY_PATH.
+
         To specify the peer to connect to, the environment variables DAQOPSERVER, TRB3_SERVER
         are read. For easier scripting, those environment variables can also be set inside this
         constructor if the keywords arguments daqopserver or trb3_server are specified.
 
         Keyword arguments:
+        libtrbnet -- full path to libtrbnet.so
         daqopserver -- optional override of the DAQOPSERVER enviromental variable
         trb3_server -- optional override of the TRB3_SERVER enviromental variable
-        libtrbnet -- full path to libtrbnet.so
         buffersize -- Size of the buffer in 32-bit words when reading back data (default: 16MiB)
         '''
-        self.trblib = ctypes.cdll.LoadLibrary(libtrbnet)
-        self.declare_types()
         if trb3_server: os.environ['TRB3_SERVER'] = trb3_server
         if daqopserver: os.environ['DAQOPSERVER'] = daqopserver
         self.buffersize = buffersize
+        if not libtrbnet:
+            from .util import _find_lib
+            libtrbnet =_find_lib('trbnet')
+        self.libtrbnet = libtrbnet
+        self.trblib = ctypes.cdll.LoadLibrary(libtrbnet)
+        self.declare_types()
         status = self.trblib.init_ports()
         if status < 0:
             raise Exception('Error initialising ports.')
