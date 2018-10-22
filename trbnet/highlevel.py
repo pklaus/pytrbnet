@@ -14,4 +14,4 @@ class TrbNet(_TrbNet):
 
     def trb_register_read_mem(self, trb_address, reg_address, option, size):
         lin_data = super().trb_register_read_mem(trb_address, reg_address, option, size)
-        return get_endpoint_dict(lin_data, words_per_endpoint=size, scalar_if_possible=False)
+        return get_endpoint_dict(lin_data, scalar_if_possible=False)

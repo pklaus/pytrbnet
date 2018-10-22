@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-def get_endpoint_dict(lin_data, words_per_endpoint, scalar_if_possible=True):
+def get_endpoint_dict(lin_data, words_per_endpoint=-1, scalar_if_possible=True):
     """
     A utility function to structure response data from the
     trb_register_read() and trb_register_read_mem() functions.
@@ -13,17 +13,26 @@ def get_endpoint_dict(lin_data, words_per_endpoint, scalar_if_possible=True):
     the dictionary value is always a list.
     """
     endpoint_dict = {}
-    if len(lin_data) % (words_per_endpoint + 1) != 0:
-        raise ValueError("len(lin_data) =", len(lin_data), " -  expected a multiple of", (words_per_endpoint + 1))
-    endpoints = lin_data[::(words_per_endpoint + 1)]
-    offset = 0
-    for endpoint in endpoints:
-        offset += 1
-        if words_per_endpoint == 1 and scalar_if_possible:
-            endpoint_dict[endpoint] = lin_data[offset]
-        else:
-            endpoint_dict[endpoint] = lin_data[offset:offset+words_per_endpoint]
-        offset += words_per_endpoint
+    if words_per_endpoint == -1:
+        offset = 0
+        while len(lin_data) > offset:
+            header = lin_data[offset]
+            offset += 1
+            length, endpoint = (header >> 16), (header & 0xffff)
+            endpoint_dict[endpoint] = lin_data[offset:offset+length]
+            offset += length
+    else:
+        if (len(lin_data) % (words_per_endpoint + 1)) != 0:
+            raise ValueError("len(lin_data) =", len(lin_data), " -  expected a multiple of", (words_per_endpoint + 1))
+        endpoints = lin_data[::(words_per_endpoint + 1)]
+        offset = 0
+        for endpoint in endpoints:
+            offset += 1
+            if words_per_endpoint == 1 and scalar_if_possible:
+                endpoint_dict[endpoint] = lin_data[offset]
+            else:
+                endpoint_dict[endpoint] = lin_data[offset:offset+words_per_endpoint]
+            offset += words_per_endpoint
     return endpoint_dict
 
 def _find_lib(inp_lib_name):
