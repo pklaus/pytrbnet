@@ -6,7 +6,8 @@ import os
 
 from .errorcodes import trb_errno_dict
 
-class TrbNet(object):
+
+class _TrbNet(object):
     '''
     Wrapper class for trbnet access using python
     '''

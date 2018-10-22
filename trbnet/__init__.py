@@ -1,1 +1,2 @@
-from .core import TrbNet
+from .lowlevel import _TrbNet
+from .highlevel import TrbNet
