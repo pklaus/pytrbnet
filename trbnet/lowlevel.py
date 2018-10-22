@@ -5,6 +5,16 @@ import os
 # TODO: use warnings to indicate access to wrong register or no data
 
 
+class TrbTerm(ctypes.Structure):
+    """
+    The TRB_TERM C Struct representing the information
+    carried by network termination packets.
+    """
+    _fields_ = [ ("status_common", ctypes.c_uint16),
+                 ("status_channel", ctypes.c_uint16),
+                 ("sequence", ctypes.c_uint16),
+                 ("channel", ctypes.c_uint8) ]
+
 class _TrbNet(object):
     '''
     Wrapper class for trbnet access using python
@@ -61,6 +71,10 @@ class _TrbNet(object):
         '''
         return ctypes.c_int.in_dll(self.trblib, 'trb_errno').value
 
+    def trb_term(self):
+        term = TrbTerm.in_dll(self.trblib, 'trb_term')
+        return (term.status_common, term.status_channel, term.sequence, term.channel)
+
     def declare_types(self):
         '''
         Declare argument and return types of libtrbnet calls via ctypes
@@ -106,6 +120,8 @@ class _TrbNet(object):
         self.trblib.trb_nettrace.restypes = ctypes.c_int
         self.trblib.trb_errorstr.argtypes = [ctypes.c_int]
         self.trblib.trb_errorstr.restype = ctypes.c_char_p
+        self.trblib.trb_termstr.argtypes = [TrbTerm]
+        self.trblib.trb_termstr.restype = ctypes.c_char_p
         
 
     def trb_errorstr(self, errno):
@@ -304,3 +320,18 @@ class _TrbNet(object):
             raise Exception('Error while doing net trace, ' +
                             self.trb_errorstr(self.trb_errno()))
         return [data_array[i] for i in range(status)]
+
+    def trb_termstr(self, term):
+        '''
+        Get string representation for network termination packet info tuple.
+
+        Arguments:
+        term -- network termination packet info
+                (TrbTerm instance or tuple of four integer values)
+
+        Returns:
+        python str with description of the error
+        '''
+        if isinstance(term, tuple): term = TrbTerm(*term)
+        _result = self.trblib.trb_termstr(term)
+        return _result.decode('ascii')
