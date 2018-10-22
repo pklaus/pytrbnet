@@ -105,7 +105,7 @@ class _TrbNet(object):
                                                   ctypes.c_uint]
         self.trblib.trb_nettrace.restypes = ctypes.c_int
         self.trblib.trb_errorstr.argtypes = [ctypes.c_int]
-        self.trblib.trb_errorstr.restype = ctypes.POINTER(ctypes.c_char)
+        self.trblib.trb_errorstr.restype = ctypes.c_char_p
         
 
     def trb_errorstr(self, errno):
@@ -120,8 +120,7 @@ class _TrbNet(object):
         '''
         errno = ctypes.c_int(errno)
         _result = self.trblib.trb_errorstr(errno)
-        errorstring = ctypes.c_char_p.from_buffer(_result)
-        return errorstring.value
+        return _result.decode('ascii')
 
     def trb_register_read(self, trb_address, reg_address):
         '''
