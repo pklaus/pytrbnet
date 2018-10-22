@@ -12,7 +12,7 @@ class _TrbNet(object):
     Wrapper class for trbnet access using python
     '''
 
-    def __init__(self, daqopserver='', trb3_server='', path_to_lib='libtrbnet.so', buffersize=4194304):
+    def __init__(self, daqopserver='', trb3_server='', libtrbnet='libtrbnet.so', buffersize=4194304):
         '''
         Constructor for the low level TrbNet class.
         Loads the shared library (libtrbnet), sets enviromental variables and initialises ports.
@@ -27,10 +27,10 @@ class _TrbNet(object):
         Keyword arguments:
         daqopserver -- optional override of the DAQOPSERVER enviromental variable
         trb3_server -- optional override of the TRB3_SERVER enviromental variable
-        path_to_lib -- full path to libtrbnet.so
+        libtrbnet -- full path to libtrbnet.so
         buffersize -- Size of the buffer in 32-bit words when reading back data (default: 16MiB)
         '''
-        self.trblib = ctypes.cdll.LoadLibrary(path_to_lib)
+        self.trblib = ctypes.cdll.LoadLibrary(libtrbnet)
         self.declare_types()
         if trb3_server: os.environ['TRB3_SERVER'] = trb3_server
         if daqopserver: os.environ['DAQOPSERVER'] = daqopserver
