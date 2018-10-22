@@ -17,9 +17,11 @@ class _TrbNet(object):
         Default Constructor. Sets enviromental variable and initialises ports.
         The trbnet daemon has to be running.
 
-        Keyword arguments:
-        trbserver -- string for TRB3_SERVER enviromental variable
+        Arguments:
+        trb_server -- string for TRB3_SERVER enviromental variable
         daq_server -- string for DAQOPSERVER enviromental variable
+
+        Keyword arguments:
         path_to_lib -- full path to libtrbnet.so
         buffersize -- Size of the buffer in 32-bit words when reading back data (default: 16MiB)
         '''
@@ -114,7 +116,7 @@ class _TrbNet(object):
         '''
         Read value from trb register.
 
-        Keyword arguments:
+        Arguments:
         trb_address -- trb endpoint address
         reg_address -- register address
 
@@ -133,7 +135,7 @@ class _TrbNet(object):
         '''
         Write trb register
 
-        Keyword Arguments:
+        Arguments:
         trb_address -- trb endpoint address
         reg_address -- register address
         value -- value to write to register
@@ -149,7 +151,7 @@ class _TrbNet(object):
         '''
         Perform several trb register reads
 
-        Keyword Arguments:
+        Arguments:
         trb_address -- trb endpoint address
         reg_address -- register address
         option -- read option, 0 = read same register several times 1 = read adjacent registers
@@ -173,7 +175,7 @@ class _TrbNet(object):
         '''
         Read unique id of endpoint
 
-        Keyword Arguments:
+        Arguments:
         trb_address -- address of endpoint
 
         Returns:
@@ -194,7 +196,7 @@ class _TrbNet(object):
         '''
         Set trb net address
 
-        Keyword Arguments:
+        Arguments:
         uid -- the unique ID of the endpoint
         endpoint -- number of the trb endpoint
         trb_address -- new trb address
@@ -219,7 +221,7 @@ class _TrbNet(object):
     def trb_fifo_flush(self, channel):
         '''flush trb fifo
 
-        Keyword arguments:
+        Arguments:
         channel: trb channel (ipu, slowcontrol etc)'''
         channel = ctypes.c_uint8(channel)
         return self.trblib.trb_fifo_flush(channel)
@@ -227,7 +229,7 @@ class _TrbNet(object):
     def trb_send_trigger(self, trigtype, info, random, number):
         '''send trigger to trb
 
-        Keyword arguments:
+        Arguments:
         trigtype: trigger type (status, calibration)
         info: trigger information
         random: random trigger number
