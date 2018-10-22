@@ -34,7 +34,10 @@ class _TrbNet(object):
         '''
         Destructor.
         '''
-        self.trblib.close_ports()
+        try:
+            self.trblib.close_ports()
+        except AttributeError:
+            pass
 
     def trb_errno(self):
         '''
