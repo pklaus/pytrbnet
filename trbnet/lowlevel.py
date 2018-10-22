@@ -4,8 +4,6 @@ import os
 
 # TODO: use warnings to indicate access to wrong register or no data
 
-from .errorcodes import trb_errno_dict
-
 
 class _TrbNet(object):
     '''
@@ -106,6 +104,8 @@ class _TrbNet(object):
         self.trblib.trb_nettrace.argtypes = [ctypes.c_uint16, ctypes.POINTER(ctypes.c_uint32),
                                                   ctypes.c_uint]
         self.trblib.trb_nettrace.restypes = ctypes.c_int
+        self.trblib.trb_errorstr.argtypes = [ctypes.c_int]
+        self.trblib.trb_errorstr.restype = ctypes.POINTER(ctypes.c_char)
         
 
     def trb_errorstr(self, errno):
@@ -118,13 +118,10 @@ class _TrbNet(object):
         Returns:
         python str with description of the error
         '''
-        try:
-            return trb_errno_dict[errno]
-        except:
-            if errno >= 256:
-                return "RPC error"
-            else:
-                return "Unknown Error"
+        errno = ctypes.c_int(errno)
+        _result = self.trblib.trb_errorstr(errno)
+        errorstring = ctypes.c_char_p.from_buffer(_result)
+        return errorstring.value
 
     def trb_register_read(self, trb_address, reg_address):
         '''
