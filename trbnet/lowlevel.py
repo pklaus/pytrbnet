@@ -14,8 +14,15 @@ class _TrbNet(object):
 
     def __init__(self, daqopserver='', trb3_server='', path_to_lib='libtrbnet.so', buffersize=4194304):
         '''
-        Default Constructor. Sets enviromental variable and initialises ports.
-        The trbnet daemon has to be running.
+        Constructor for the low level TrbNet class.
+        Loads the shared library (libtrbnet), sets enviromental variables and initialises ports.
+
+        Depending on the version of libtrbnet.so used, the connection to TrbNet is established
+        either by directly connecting to a TRB board (trbnettools/libtrbnet/libtrbnet.so) or
+        by connecting to a trbnet daemon instance (if trbnettools/trbnetd/libtrbnet.so is used).
+        To specify the peer to connect to, the environment variables DAQOPSERVER, TRB3_SERVER
+        are read. For easier scripting, those environment variables can also be set inside this
+        constructor if the keywords arguments daqopserver or trb3_server are specified.
 
         Keyword arguments:
         daqopserver -- optional override of the DAQOPSERVER enviromental variable
