@@ -143,7 +143,7 @@ class _TrbNet(object):
         Read value from trb register.
 
         Arguments:
-        trb_address -- trb endpoint address
+        trb_address -- node(s) to read from
         reg_address -- register address
 
         Returns:
@@ -162,7 +162,7 @@ class _TrbNet(object):
         Write trb register
 
         Arguments:
-        trb_address -- trb endpoint address
+        trb_address -- node(s) to write to
         reg_address -- register address
         value -- value to write to register
         '''
@@ -178,7 +178,7 @@ class _TrbNet(object):
         Perform several trb register reads
 
         Arguments:
-        trb_address -- trb endpoint address
+        trb_address -- node(s) to read from
         reg_address -- register address
         option -- read option, 0 = read same register several times 1 = read adjacent registers
         size -- number of reads
@@ -199,10 +199,10 @@ class _TrbNet(object):
 
     def trb_read_uid(self, trb_address):
         '''
-        Read unique id of endpoint
+        Read unique id(s) of TrbNet node(s)
 
         Arguments:
-        trb_address -- address of endpoint
+        trb_address -- node(s) to be queried
 
         Returns:
         python list
@@ -223,7 +223,7 @@ class _TrbNet(object):
         Set trb net address
 
         Arguments:
-        uid -- the unique ID of the endpoint
+        uid -- the unique ID of the node
         endpoint -- number of the trb endpoint
         trb_address -- new trb address
         '''
