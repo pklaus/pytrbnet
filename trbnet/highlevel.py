@@ -26,13 +26,13 @@ class TrbNet(_TrbNet):
         trb_address -- node(s) to be queried
 
         Returns:
-        dict -- the key being the 64bit uid (int) and the value is a tuple of (trb_address, endpoint)
+        dict -- the keys being (uid, endpoint) and the associated value the currently assigned trb address
         '''
         lin_data = super().trb_read_uid(trb_address)
         if (len(lin_data) % 4) != 0:
             raise ValueError("len(lin_data) == %d -  expected a multiple of %d" % (len(lin_data), 4))
         responses = [lin_data[pos:pos+4] for pos in range(0, len(lin_data), 4)]
-        uid_dict = {(r[0] << 32) + r[1]: (r[3], r[2]) for r in responses}
+        uid_dict = {((r[0] << 32) + r[1], r[2]): r[3] for r in responses}
         return uid_dict
 
     def _get_dynamic_trb_address_dict(self, lin_data, force_length=0):
