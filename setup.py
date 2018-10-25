@@ -22,7 +22,10 @@ setup(name='trbnet',
       author_email = 'klaus@physik.uni-frankfurt.de',
       url = 'https://github.com/pklaus/pytrbnet',
       license = 'GPL',
-      packages = ['trbnet'],
+      packages = [
+          'trbnet',
+          'trbnet.core',
+          ],
       entry_points = {
           'console_scripts': [
           ],

@@ -47,7 +47,7 @@ class _TrbNet(object):
         if daqopserver: os.environ['DAQOPSERVER'] = daqopserver
         self.buffersize = buffersize
         if not libtrbnet:
-            from .util import _find_lib
+            from .libutils import _find_lib
             libtrbnet =_find_lib('trbnet')
         self.libtrbnet = libtrbnet
         self.trblib = ctypes.cdll.LoadLibrary(libtrbnet)
