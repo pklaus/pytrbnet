@@ -25,6 +25,7 @@ setup(name='trbnet',
       packages = [
           'trbnet',
           'trbnet.core',
+          'trbnet.xmldb',
           ],
       entry_points = {
           'console_scripts': [
@@ -34,6 +35,7 @@ setup(name='trbnet',
       zip_safe = True,
       platforms = 'Linux',
       install_requires = [
+          "lxml",
       ],
       keywords = 'TrbNet PyTrbNet FPGA Low-latency network wrapper',
       classifiers = [
