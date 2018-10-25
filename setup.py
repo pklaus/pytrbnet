@@ -26,9 +26,11 @@ setup(name='trbnet',
           'trbnet',
           'trbnet.core',
           'trbnet.xmldb',
+          'trbnet.util',
           ],
       entry_points = {
           'console_scripts': [
+              'trbcmd.py = trbnet.util.trbcmd:cli',
           ],
       },
       include_package_data = False,
