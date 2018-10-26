@@ -22,13 +22,13 @@ def _rm(trb_address, register, size, mode):
 
 def _xmlentry(entity, name):
     db = XmlDb()
-    reg_addresses = db.get_reg_addresses(entity, name)
+    reg_addresses = db._get_all_element_addresses(entity, name)
     for count, reg_address in enumerate(reg_addresses, start=1):
         print("slice", count, "address:", hex(reg_address))
 
 def _xmlget(trb_address, entity, name):
     db = XmlDb()
-    reg_addresses = db.get_reg_addresses(entity, name)
+    reg_addresses = db._get_all_element_addresses(entity, name)
     slices = len(reg_addresses)
     for slice, reg_address in enumerate(reg_addresses):
         response = t.register_read(trb_address, reg_address)

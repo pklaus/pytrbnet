@@ -77,26 +77,63 @@ class XmlDb(object):
             fmt = "Non-unique search for tag '%s' with attribute name=%s! XML Database Error!"
             raise ValueError(fmt % (tag, name_attr))
 
-    def find_field(self, entity, field):
-        return self._get_unique_element_by_name_attr(entity, field, tag='field')
+    def _get_single_element_by_name_attr_prefer_field(self, entity, name_attr):
+        '''
+        This function will try to find a unique element:
+        * First, it tries if a field' element with that name attribute exists.
+          (Unique only among the 'field' elements)
+        * If that fails with no result, it retries extending the search to any
+          unique element (tag) with the given name attribute.
+        '''
+        try:
+            return self._get_unique_element_by_name_attr(entity, name_attr, tag='field')
+        except:
+            pass
+        return self._get_unique_element_by_name_attr(entity, name_attr, tag='*')
 
-    def get_reg_addresses(self, entity, field):
-        if type(field) == str:
-            field = self.find_field(entity, field)
+    def find_field(self, entity, field):
+        return self._get_single_element_by_name_attr_prefer_field(entity, field)
+
+    def _get_element_addressing(self, entity, element):
+        '''
+        Determine the addressing of an element in the database:
+
+        * base_address: The address of the first register
+        * slices: The number of slices for this (or a parent) element,
+          set to None if there are no repetitions.
+        * stepsize: The stepsize to determine the address for any additional slices
+        * size: The size (number of elements) of the requested element
+
+        Returns:
+        tuple -- (base_address, slices, stepsize, size)
+        '''
+        if type(element) == str:
+            element = self._get_single_element_by_name_attr_prefer_field(entity, element)
         base_address = 0
-        repeat = 1
-        offset = 0
-        # Determine base_address (and slices/repetitions if applicable)
-        node = field.getparent()
+        slices = None
+        size = element.get('size', None)
+        stepsize = 0
+        node = element
         while node.tag in self.ENTITY_TAGS:
             base_address += int(node.get('address', '0'), 16)
             if node.tag == self.TOP_ENTITY: break
-            r = int(node.get('repeat', 1))
-            if r != 1:
-                repeat = r
-                offset = int(node.get('size', 0), 10)
+            repeat = int(node.get('repeat', 1))
+            if repeat != 1:
+                slices = repeat
+                stepsize = int(node.get('size', 0), 10)
             node = node.getparent()
-        return [base_address + i * offset for i in range(repeat)]
+        return (base_address, slices, stepsize, size)
+
+    def _get_all_element_addresses(self, entity, element):
+        '''
+        Determine all addresses of an element
+
+        Returns:
+        list -- containing all addresses of an element
+        '''
+        base_address, slices, stepsize, size = self._get_element_addressing(entity, element)
+        repeat = slices if slices is not None else 1
+        return [base_address + i * stepsize for i in range(repeat)]
 
     def _get_field_identifier(self, entity, fieldname, trb_address, slice=None):
         identifier = "{}-0x{:04x}-{}".format(entity, trb_address, fieldname)
@@ -115,7 +152,7 @@ class XmlDb(object):
 
     def convert_field(self, entity, fieldname, register_word, trb_address=0xffff, slice=None):
         field = self.find_field(entity, fieldname)
-        address = self.get_reg_addresses(entity, field)[slice if slice is not None else 0]
+        address = self._get_all_element_addresses(entity, field)[slice if slice is not None else 0]
         start = int(field.get('start', 0))
         bits = int(field.get('bits', 32))
         format = field.get('format', 'unsigned')
