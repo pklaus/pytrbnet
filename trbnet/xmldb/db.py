@@ -160,8 +160,8 @@ class XmlDb(object):
                 register_blocks += self._determine_continuous_register_blocks(entity, child)
         return register_blocks
 
-    def _get_field_identifier(self, entity, fieldname, trb_address, slice=None):
-        identifier = "{}-0x{:04x}-{}".format(entity, trb_address, fieldname)
+    def _get_field_identifier(self, entity, field_name, trb_address, slice=None):
+        identifier = "{}-0x{:04x}-{}".format(entity, trb_address, field_name)
         if slice is not None:
             identifier += "." + str(slice)
         return identifier
@@ -175,8 +175,8 @@ class XmlDb(object):
             node = node.getparent()
         return list(reversed(stack))
 
-    def convert_field(self, entity, fieldname, register_word, trb_address=0xffff, slice=None):
-        field = self.find_field(entity, fieldname)
+    def convert_field(self, entity, field_name, register_word, trb_address=0xffff, slice=None):
+        field = self.find_field(entity, field_name)
         address = self._get_all_element_addresses(entity, field)[slice if slice is not None else 0]
         start = int(field.get('start', 0))
         bits = int(field.get('bits', 32))
@@ -226,7 +226,7 @@ class XmlDb(object):
             results = field.findall("enumItem")
             for result in results:
                 meta['choices'][int(result.get('value'))] = result.text
-            DynamicEnum = enum.Enum(fieldname, {v: k for k, v in meta['choices'].items()})
+            DynamicEnum = enum.Enum(field_name, {v: k for k, v in meta['choices'].items()})
             if raw in meta['choices']:
                 value['python'] = DynamicEnum(raw)
                 value['string'] = meta['choices'][raw]
@@ -246,14 +246,14 @@ class XmlDb(object):
         else:
             raise NotImplementedError('format: ' + format)
         if value['unicode'] is None: value['unicode'] = value['string']
-        identifier = self._get_field_identifier(entity, fieldname, trb_address, slice=slice)
+        identifier = self._get_field_identifier(entity, field_name, trb_address, slice=slice)
         hierarchy = self._get_field_hierarchy(entity, field)
         context = {
           'address': address,
           'identifier': identifier,
           'hierarchy': hierarchy,
           'trb_address': trb_address,
-          'fieldname': fieldname,
+          'field_name': field_name,
         }
         return {
             'value': value,

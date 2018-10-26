@@ -47,15 +47,15 @@ def _xmlget(trb_address, entity, name):
                 if reg_address not in all_data:
                     all_data[reg_address] = {}
                 all_data[reg_address][response_trb_address] = word
-    for fieldname in db._contained_fields(entity, name):
-        reg_addresses = db._get_all_element_addresses(entity, fieldname)
+    for field_name in db._contained_fields(entity, name):
+        reg_addresses = db._get_all_element_addresses(entity, field_name)
         slices = len(reg_addresses)
         for slice, reg_address in enumerate(reg_addresses):
             if reg_address not in all_data:
-                print("Error:  fieldname:", fieldname, "with register address:", reg_address, "not found in fetched data")
+                print("Error:  field_name:", field_name, "with register address:", reg_address, "not found in fetched data")
                 continue
             for response_trb_address, value in all_data[reg_address].items():
-                data = db.convert_field(entity, fieldname, value, trb_address=response_trb_address, slice=slice if slices > 1 else None)
+                data = db.convert_field(entity, field_name, value, trb_address=response_trb_address, slice=slice if slices > 1 else None)
                 #print(data)
                 print("{context[identifier]} {value[unicode]} {unit}".format(**data))
 
