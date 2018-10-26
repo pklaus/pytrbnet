@@ -25,7 +25,6 @@ class XmlDb(object):
             folder = os.path.expanduser(folder)
         self.folder = folder
         self._cache_xml_docs = {}
-        self._cache_unique_elements = {}
         self._cache_elements = {}
 
     def _get_xml_doc(self, entity):
@@ -68,11 +67,6 @@ class XmlDb(object):
         return results
 
     def _get_unique_element_by_name_attr(self, entity, name_attr, tag='*'):
-        # Try to find element in cache and return it:
-        key = (entity, name_attr, tag)
-        if key in self._cache_unique_elements:
-            return self.unique_elements_cache[key]
-        # Otherwise, search for it in the XML file:
         results = self._get_elements_by_name_attr(entity, name_attr, tag=tag)
         # Return the result if we found a single one and raise exceptions otherwise:
         if len(results) == 1:
