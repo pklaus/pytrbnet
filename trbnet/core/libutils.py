@@ -8,10 +8,10 @@ def _find_lib(inp_lib_name):
     # Test 1: if LIBTRBNET env var is set, use it.
     import os
     dllpath = os.environ.get('LIBTRBNET', None)
-
-    if (dllpath is not None and os.path.exists(dllpath) and
-            os.path.isfile(dllpath)):
-        return dllpath
+    if dllpath is not None:
+        dllpath = os.path.expanduser(dllpath)
+        if os.path.exists(dllpath) and os.path.isfile(dllpath):
+            return dllpath
 
     # Test 2: look in installed python location for dll (not used right now)
     #dllpath = resource_filename('trbnet.clibs', clib_search_path(inp_lib_name))
