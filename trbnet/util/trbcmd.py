@@ -6,6 +6,39 @@ from trbnet.xmldb import XmlDb
 
 t = TrbNet()
 
+### Definition of a Python API to the functions later exposed by the CLI
+
+def _r(trb_address, register):
+    response = t.register_read(trb_address, register)
+    for endpoint in response:
+        str_data = '{:08X}'.format(response[endpoint])
+        print("endpoint 0x{:08X} responded with: {}".format(endpoint, str_data))
+
+def _rm(trb_address, register, size, mode):
+    response = t.register_read_mem(trb_address, register, mode, size)
+    for endpoint in response:
+        str_data = ' '.join('{:08X}'.format(word) for word in response[endpoint])
+        print("endpoint 0x{:08X} responded with: {}".format(endpoint, str_data))
+
+def _xmlentry(xml_path, entity):
+    db = XmlDb(xml_path)
+    reg_addresses = db.get_reg_addresses(entity)
+    for count, reg_address in enumerate(reg_addresses, start=1):
+        print("slice", count, "address:", hex(reg_address))
+
+def _xmlget(xml_path, trb_address, entity):
+    db = XmlDb(xml_path)
+    reg_addresses = db.get_reg_addresses(entity)
+    slices = len(reg_addresses)
+    for slice, reg_address in enumerate(reg_addresses):
+        response = t.register_read(trb_address, reg_address)
+        for response_trb_address, value in response.items():
+            data = db.convert_field(entity, value, trb_address=response_trb_address, slice=slice if slices > 1 else None)
+            #print(data)
+            print("{context[full_name]} {value[unicode]} {unit}".format(**data))
+
+### Definition of the CLI with the help of the click package:
+
 class BasedIntParamType(click.ParamType):
     name = 'integer'
     def convert(self, value, param, ctx):
@@ -17,6 +50,7 @@ class BasedIntParamType(click.ParamType):
             return int(value, 10)
         except ValueError:
             self.fail('%s is not a valid integer' % value, param, ctx)
+
 BASED_INT = BasedIntParamType()
 
 @click.group()
@@ -27,10 +61,8 @@ def cli():
 @click.argument('trb_address', type=BASED_INT)
 @click.argument('register', type=BASED_INT)
 def r(trb_address, register):
-    response = t.register_read(trb_address, register)
-    for endpoint in response:
-        str_data = '{:08X}'.format(response[endpoint])
-        print("endpoint 0x{:08X} responded with: {}".format(endpoint, str_data))
+    click.echo('Reading register')
+    _r(trb_address, register)
 
 @cli.command()
 @click.argument('trb_address', type=BASED_INT)
@@ -39,34 +71,22 @@ def r(trb_address, register):
 @click.argument('mode', type=BASED_INT)
 def rm(trb_address, register, size, mode):
     click.echo('Reading register memory')
-    response = t.register_read_mem(trb_address, register, mode, size)
-    for endpoint in response:
-        str_data = ' '.join('{:08X}'.format(word) for word in response[endpoint])
-        print("endpoint 0x{:08X} responded with: {}".format(endpoint, str_data))
+    _rm(trb_address, register, size, mode)
 
 @cli.command()
 @click.argument('xml_path')
 @click.argument('entity')
 def xmlentry(xml_path, entity):
-    db = XmlDb(xml_path)
-    reg_addresses = db.get_reg_addresses(entity)
-    for count, reg_address in enumerate(reg_addresses, start=1):
-        print("slice", count, "address:", hex(reg_address))
+    click.echo('Searching xml register entry')
+    _xmlentry(xml_path, entity)
 
 @cli.command()
 @click.argument('xml_path')
 @click.argument('trb_address', type=BASED_INT)
 @click.argument('entity')
 def xmlget(xml_path, trb_address, entity):
-    db = XmlDb(xml_path)
-    reg_addresses = db.get_reg_addresses(entity)
-    slices = len(reg_addresses)
-    for slice, reg_address in enumerate(reg_addresses):
-        response = t.register_read(trb_address, reg_address)
-        for response_trb_address, value in response.items():
-            data = db.convert_field(entity, value, trb_address=response_trb_address, slice=slice if slices > 1 else None)
-            #print(data)
-            print("{context[full_name]} {value[unicode]} {unit}".format(**data))
+    click.echo('Querying xml register entry from TrbNet')
+    _xmlget(xml_path, trb_address, entity)
 
 if __name__ == '__main__':
     cli()
