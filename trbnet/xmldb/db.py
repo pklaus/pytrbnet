@@ -4,17 +4,41 @@ from datetime import datetime as dt
 from lxml import etree
 
 class XmlDb(object):
+    '''
+    XmlDb is an object representing the XML database used to describe
+    registers of TrbNet systems. In this context, "XML database" means:
+    a set of XML files in a single folder obeying a specific schema.
 
-    def __init__(self, path):
-        self.name = os.path.splitext(os.path.basename(path))[0]
-        self.xml_doc = etree.parse(path)
+    The database folder can be provided by the environment variable
+    'XMLDB' or by specifying the folder as keyword argument when
+    instantiating the class:
+
+    >>> db = XmlDb(folder='./path/to/daqtools/xml-db/database/')
+    '''
+
+    def __init__(self, folder=None):
+        if folder is None:
+            folder = os.environ.get('XMLDB', '.')
+            folder = os.path.expanduser(folder)
+        self.folder = folder
+        self.xml_docs = {}
+
+    def _get_xml_doc(self, entity):
+        if entity in self.xml_docs:
+            return self.xml_docs[entity]
+        xml_path = os.path.join(self.folder, entity + '.xml')
+        xml_doc = etree.parse(xml_path)
+        ## check schema?
         #xmlschema_doc = etree.parse(xsd_path)
-        #self.xmlschema = etree.XMLSchema(xmlschema_doc)
-        #result = self.xmlschema.validate(self.xml_doc)
+        #xmlschema = etree.XMLSchema(xmlschema_doc)
+        #result = xmlschema.validate(xml_doc)
+        self.xml_docs[entity] = xml_doc
+        return xml_doc
 
-    def find_field(self, field):
+    def find_field(self, entity, field):
+        xml_doc = self._get_xml_doc(entity)
         # Find the right field entry in the xml database
-        results = self.xml_doc.findall("//field[@name='"+field+"']")
+        results = xml_doc.findall("//field[@name='"+field+"']")
         # Make sure, we only found one result and select it
         if len(results) == 1:
             return results[0]
@@ -23,9 +47,9 @@ class XmlDb(object):
         elif len(results) != 0:
             raise ValueError("Non-unique field name! XML Database Error!")
 
-    def get_reg_addresses(self, field):
+    def get_reg_addresses(self, entity, field):
         if type(field) == str:
-            field = self.find_field(field)
+            field = self.find_field(entity, field)
         base_address = 0
         repeat = 1
         offset = 0
@@ -41,9 +65,9 @@ class XmlDb(object):
             node = node.getparent()
         return [base_address + i * offset for i in range(repeat)]
 
-    def convert_field(self, fieldname, register_word, trb_address=0xffff, slice=None):
-        field = self.find_field(fieldname)
-        address = self.get_reg_addresses(field)[slice if slice is not None else 0]
+    def convert_field(self, entity, fieldname, register_word, trb_address=0xffff, slice=None):
+        field = self.find_field(entity, fieldname)
+        address = self.get_reg_addresses(entity, field)[slice if slice is not None else 0]
         start = int(field.get('start', 0))
         bits = int(field.get('bits', 32))
         format = field.get('format', 'unsigned')
@@ -112,7 +136,7 @@ class XmlDb(object):
         else:
             raise NotImplementedError('format: ' + format)
         if value['unicode'] is None: value['unicode'] = value['string']
-        full_name = "{}-0x{:04x}-{}".format(self.name, trb_address, fieldname)
+        full_name = "{}-0x{:04x}-{}".format(entity, trb_address, fieldname)
         if slice is not None:
             full_name += "." + str(slice)
         context = {

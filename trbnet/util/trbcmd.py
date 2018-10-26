@@ -20,20 +20,20 @@ def _rm(trb_address, register, size, mode):
         str_data = ' '.join('{:08X}'.format(word) for word in response[endpoint])
         print("endpoint 0x{:08X} responded with: {}".format(endpoint, str_data))
 
-def _xmlentry(xml_path, entity):
-    db = XmlDb(xml_path)
-    reg_addresses = db.get_reg_addresses(entity)
+def _xmlentry(entity, name):
+    db = XmlDb()
+    reg_addresses = db.get_reg_addresses(entity, name)
     for count, reg_address in enumerate(reg_addresses, start=1):
         print("slice", count, "address:", hex(reg_address))
 
-def _xmlget(xml_path, trb_address, entity):
-    db = XmlDb(xml_path)
-    reg_addresses = db.get_reg_addresses(entity)
+def _xmlget(trb_address, entity, name):
+    db = XmlDb()
+    reg_addresses = db.get_reg_addresses(entity, name)
     slices = len(reg_addresses)
     for slice, reg_address in enumerate(reg_addresses):
         response = t.register_read(trb_address, reg_address)
         for response_trb_address, value in response.items():
-            data = db.convert_field(entity, value, trb_address=response_trb_address, slice=slice if slices > 1 else None)
+            data = db.convert_field(entity, name, value, trb_address=response_trb_address, slice=slice if slices > 1 else None)
             #print(data)
             print("{context[full_name]} {value[unicode]} {unit}".format(**data))
 
@@ -74,19 +74,19 @@ def rm(trb_address, register, size, mode):
     _rm(trb_address, register, size, mode)
 
 @cli.command()
-@click.argument('xml_path')
 @click.argument('entity')
-def xmlentry(xml_path, entity):
+@click.argument('name')
+def xmlentry(entity, name):
     click.echo('Searching xml register entry')
-    _xmlentry(xml_path, entity)
+    _xmlentry(entity, name)
 
 @cli.command()
-@click.argument('xml_path')
 @click.argument('trb_address', type=BASED_INT)
 @click.argument('entity')
-def xmlget(xml_path, trb_address, entity):
+@click.argument('name')
+def xmlget(trb_address, entity, name):
     click.echo('Querying xml register entry from TrbNet')
-    _xmlget(xml_path, trb_address, entity)
+    _xmlget(trb_address, entity, name)
 
 if __name__ == '__main__':
     cli()
