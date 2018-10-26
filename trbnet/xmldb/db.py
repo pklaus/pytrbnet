@@ -25,6 +25,8 @@ class XmlDb(object):
             folder = os.path.expanduser(folder)
         self.folder = folder
         self._cache_xml_docs = {}
+        self._cache_unique_elements = {}
+        self._cache_elements = {}
 
     def _get_xml_doc(self, entity):
         # Try to fetch xmldoc from cache and return it:
@@ -40,17 +42,49 @@ class XmlDb(object):
         self._cache_xml_docs[entity] = xml_doc
         return xml_doc
 
-    def find_field(self, entity, field):
-        xml_doc = self._get_xml_doc(entity)
-        # Find the right field entry in the xml database
-        results = xml_doc.findall("//field[@name='"+field+"']")
-        # Make sure, we only found one result and select it
+    def _get_elements_by_name_attr(self, entity, name_attr, tag='*', amount=None):
+        '''
+        Finds and returns elements from the entity XML tree with the attribute
+        'name' having the value of this method's argument name_attr.
+
+        Arguments:
+        tag -- Can be pin the elements to search for to specific tag names. Default: wildcard
+        amount -- If set to an integer {0, 2, 3, ...}, the returned list will contain this amount of elements.
+        '''
+        # Try to fetch the elements from the cache
+        key = (entity, name_attr, tag)
+        if key in self._cache_elements:
+            results = self._cache_elements[key]
+        # Otherwise, fetch them from the XML file:
+        else:
+            xml_doc = self._get_xml_doc(entity)
+            results = xml_doc.findall("//"+tag+"[@name='"+name_attr+"']")
+            self._cache_elements[key] = results
+        # Check if we found the right amount of elements
+        if amount is not None and len(results) != amount:
+            fmt = "Could not find the desired amount of tags with attribute name=%s: found %d instead of %d"
+            raise ValueError(fmt % (name_attr, len(results), amount))
+        # Return
+        return results
+
+    def _get_unique_element_by_name_attr(self, entity, name_attr, tag='*'):
+        # Try to find element in cache and return it:
+        key = (entity, name_attr, tag)
+        if key in self._cache_unique_elements:
+            return self.unique_elements_cache[key]
+        # Otherwise, search for it in the XML file:
+        results = self._get_elements_by_name_attr(entity, name_attr, tag=tag)
+        # Return the result if we found a single one and raise exceptions otherwise:
         if len(results) == 1:
             return results[0]
         elif len(results) == 0:
-            raise ValueError("No such field found: %s" % field)
-        elif len(results) != 0:
-            raise ValueError("Non-unique field name! XML Database Error!")
+            raise ValueError("No such element found: tag '%s' with attribute name=%s" % (tag, name_attr))
+        else:
+            fmt = "Non-unique search for tag '%s' with attribute name=%s! XML Database Error!"
+            raise ValueError(fmt % (tag, name_attr))
+
+    def find_field(self, entity, field):
+        return self._get_unique_element_by_name_attr(entity, field, tag='field')
 
     def get_reg_addresses(self, entity, field):
         if type(field) == str:
