@@ -16,6 +16,9 @@ class XmlDb(object):
     >>> db = XmlDb(folder='./path/to/daqtools/xml-db/database/')
     '''
 
+    TOP_ENTITY = 'TrbNetEntity'
+    ENTITY_TAGS = ('field', 'register', 'group', 'TrbNetEntity')
+
     def __init__(self, folder=None):
         if folder is None:
             folder = os.environ.get('XMLDB', '.')
@@ -55,9 +58,9 @@ class XmlDb(object):
         offset = 0
         # Determine base_address (and slices/repetitions if applicable)
         node = field.getparent()
-        while node.tag in ('register', 'group', 'TrbNetEntity'):
+        while node.tag in self.ENTITY_TAGS:
             base_address += int(node.get('address', '0'), 16)
-            if node.tag == 'TrbNetEntity': break
+            if node.tag == self.TOP_ENTITY: break
             r = int(node.get('repeat', 1))
             if r != 1:
                 repeat = r
