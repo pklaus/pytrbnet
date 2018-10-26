@@ -205,11 +205,11 @@ class _TrbNet(object):
         trb_address -- node(s) to be queried
 
         Returns:
-        python list
-        [0]:  UID High-32Bit Word
-        [1]: UID Low-32Bit Word
-        [2]:  Endpoint Number
-        [3]: TRB-Address of the sender
+        python list, length is a multiple of 4
+        [i+0]:  UID High-32Bit Word
+        [i+1]: UID Low-32Bit Word
+        [i+2]:  Endpoint Number
+        [i+3]: TRB-Address of the sender
         '''
         data_array = (ctypes.c_uint32 * self.buffersize)()
         trb_address = ctypes.c_uint16(trb_address)
