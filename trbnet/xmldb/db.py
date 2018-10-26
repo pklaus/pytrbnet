@@ -24,18 +24,20 @@ class XmlDb(object):
             folder = os.environ.get('XMLDB', '.')
             folder = os.path.expanduser(folder)
         self.folder = folder
-        self.xml_docs = {}
+        self._cache_xml_docs = {}
 
     def _get_xml_doc(self, entity):
-        if entity in self.xml_docs:
-            return self.xml_docs[entity]
+        # Try to fetch xmldoc from cache and return it:
+        if entity in self._cache_xml_docs:
+            return self._cache_xml_docs[entity]
+        # Otherwise parse the .xml file and add it to the cache:
         xml_path = os.path.join(self.folder, entity + '.xml')
         xml_doc = etree.parse(xml_path)
         ## check schema?
         #xmlschema_doc = etree.parse(xsd_path)
         #xmlschema = etree.XMLSchema(xmlschema_doc)
         #result = xmlschema.validate(xml_doc)
-        self.xml_docs[entity] = xml_doc
+        self._cache_xml_docs[entity] = xml_doc
         return xml_doc
 
     def find_field(self, entity, field):
