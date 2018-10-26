@@ -111,7 +111,7 @@ class XmlDb(object):
             element = self._get_single_element_by_name_attr_prefer_field(entity, element)
         base_address = 0
         slices = None
-        size = element.get('size', None)
+        size = int(element.get('size', 1))
         stepsize = 0
         node = element
         while node.tag in self.ENTITY_TAGS:
@@ -132,8 +132,33 @@ class XmlDb(object):
         list -- containing all addresses of an element
         '''
         base_address, slices, stepsize, size = self._get_element_addressing(entity, element)
-        repeat = slices if slices is not None else 1
-        return [base_address + i * stepsize for i in range(repeat)]
+        return [base_address + i * stepsize for i in range(slices or 1)]
+
+    def _contained_fields(self, entity, element):
+        '''
+        name specifies the 'name' attribute of a
+        {<TrbNetEntity>,<group>,<register>,<field>}
+        tag in the .xml file corresponding to entity.
+        Returns a list of all fields contained in the element.
+        '''
+        if type(element) == str:
+            element = self._get_single_element_by_name_attr_prefer_field(entity, element)
+        fields = element.findall(".//field[@name]")
+        return [field.get('name') for field in fields]
+
+    def _determine_continuous_register_blocks(self, entity, element):
+        register_blocks = []
+        if type(element) == str:
+            element = self._get_single_element_by_name_attr_prefer_field(entity, element)
+        base_address, slices, stepsize, size = self._get_element_addressing(entity, element)
+        continuous = element.get('continuous', 'false') == 'true'
+        #print("el:", element.get('name'), "address:", hex(base_address), "size:", size, "last (tent.):", hex(base_address+size-1) ,"continuous:", continuous, "slices:", slices or 1)
+        if continuous or element.tag in ('register', 'field'):
+            register_blocks += [(base_address + i*stepsize, size) for i in range(slices or 1)]
+        else:
+            for child in element:
+                register_blocks += self._determine_continuous_register_blocks(entity, child)
+        return register_blocks
 
     def _get_field_identifier(self, entity, fieldname, trb_address, slice=None):
         identifier = "{}-0x{:04x}-{}".format(entity, trb_address, fieldname)
