@@ -45,22 +45,20 @@ def rm(trb_address, register, size, mode):
         print("endpoint 0x{:08X} responded with: {}".format(endpoint, str_data))
 
 @cli.command()
-@click.argument('xml_name')
 @click.argument('xml_path')
 @click.argument('entity')
-def xmlentry(xml_name, xml_path, entity):
-    db = XmlDb(xml_name, xml_path)
+def xmlentry(xml_path, entity):
+    db = XmlDb(xml_path)
     reg_addresses = db.get_reg_addresses(entity)
     for count, reg_address in enumerate(reg_addresses, start=1):
         print("slice", count, "address:", hex(reg_address))
 
 @cli.command()
-@click.argument('xml_name')
 @click.argument('xml_path')
 @click.argument('trb_address', type=BASED_INT)
 @click.argument('entity')
-def xmlget(xml_name, xml_path, trb_address, entity):
-    db = XmlDb(xml_name, xml_path)
+def xmlget(xml_path, trb_address, entity):
+    db = XmlDb(xml_path)
     reg_addresses = db.get_reg_addresses(entity)
     slices = len(reg_addresses)
     for slice, reg_address in enumerate(reg_addresses):

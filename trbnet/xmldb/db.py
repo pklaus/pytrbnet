@@ -1,11 +1,12 @@
+import os
 import enum
 from datetime import datetime as dt
 from lxml import etree
 
 class XmlDb(object):
 
-    def __init__(self, name, path):
-        self.name = name
+    def __init__(self, path):
+        self.name = os.path.splitext(os.path.basename(path))[0]
         self.xml_doc = etree.parse(path)
         #xmlschema_doc = etree.parse(xsd_path)
         #self.xmlschema = etree.XMLSchema(xmlschema_doc)
