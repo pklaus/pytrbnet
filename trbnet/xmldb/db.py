@@ -104,6 +104,12 @@ class XmlDb(object):
             node = node.getparent()
         return [base_address + i * offset for i in range(repeat)]
 
+    def _get_field_identifier(self, entity, fieldname, trb_address, slice=None):
+        identifier = "{}-0x{:04x}-{}".format(entity, trb_address, fieldname)
+        if slice is not None:
+            identifier += "." + str(slice)
+        return identifier
+
     def convert_field(self, entity, fieldname, register_word, trb_address=0xffff, slice=None):
         field = self.find_field(entity, fieldname)
         address = self.get_reg_addresses(entity, field)[slice if slice is not None else 0]
@@ -175,12 +181,10 @@ class XmlDb(object):
         else:
             raise NotImplementedError('format: ' + format)
         if value['unicode'] is None: value['unicode'] = value['string']
-        full_name = "{}-0x{:04x}-{}".format(entity, trb_address, fieldname)
-        if slice is not None:
-            full_name += "." + str(slice)
+        identifier = self._get_field_identifier(entity, fieldname, trb_address, slice=slice)
         context = {
           'address': address,
-          'full_name': full_name,
+          'identifier': identifier,
           'trb_address': trb_address,
           'fieldname': fieldname,
         }

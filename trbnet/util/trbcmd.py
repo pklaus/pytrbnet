@@ -35,7 +35,7 @@ def _xmlget(trb_address, entity, name):
         for response_trb_address, value in response.items():
             data = db.convert_field(entity, name, value, trb_address=response_trb_address, slice=slice if slices > 1 else None)
             #print(data)
-            print("{context[full_name]} {value[unicode]} {unit}".format(**data))
+            print("{context[identifier]} {value[unicode]} {unit}".format(**data))
 
 ### Definition of the CLI with the help of the click package:
 
