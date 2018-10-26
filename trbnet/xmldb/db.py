@@ -110,6 +110,15 @@ class XmlDb(object):
             identifier += "." + str(slice)
         return identifier
 
+    def _get_field_hierarchy(self, entity, field):
+        stack = []
+        node = field
+        while node.tag in self.ENTITY_TAGS:
+            stack.append(node.get('name'))
+            if node.tag == self.TOP_ENTITY: break
+            node = node.getparent()
+        return list(reversed(stack))
+
     def convert_field(self, entity, fieldname, register_word, trb_address=0xffff, slice=None):
         field = self.find_field(entity, fieldname)
         address = self.get_reg_addresses(entity, field)[slice if slice is not None else 0]
@@ -182,9 +191,11 @@ class XmlDb(object):
             raise NotImplementedError('format: ' + format)
         if value['unicode'] is None: value['unicode'] = value['string']
         identifier = self._get_field_identifier(entity, fieldname, trb_address, slice=slice)
+        hierarchy = self._get_field_hierarchy(entity, field)
         context = {
           'address': address,
           'identifier': identifier,
+          'hierarchy': hierarchy,
           'trb_address': trb_address,
           'fieldname': fieldname,
         }
