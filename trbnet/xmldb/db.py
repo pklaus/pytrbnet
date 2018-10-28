@@ -188,15 +188,32 @@ class XmlDb(object):
         self._cache_field_hierarchy[key] = hierarchy
         return hierarchy
 
+    def _get_field_info(self, entity, field):
+        if type(field) == str:
+            field = self.find_field(entity, field)
+        info = {
+          'addresses': self._get_all_element_addresses(entity, field),
+          'start': int(field.get('start', 0)),
+          'bits': int(field.get('bits', 32)),
+          'format': field.get('format', 'unsigned'),
+          'unit': field.get('unit', ''),
+          'scale': float(field.get('scale', 1.0)),
+          'scaleoffset': float(field.get('scaleoffset', 0.0)),
+          #'errorFlag': ,
+          #'invertFlag': ,
+        }
+        return info
+
     def convert_field(self, entity, field_name, register_word, trb_address=0xffff, slice=None):
         field = self.find_field(entity, field_name)
-        address = self._get_all_element_addresses(entity, field)[slice if slice is not None else 0]
-        start = int(field.get('start', 0))
-        bits = int(field.get('bits', 32))
-        format = field.get('format', 'unsigned')
-        unit = field.get('unit', '')
-        scale = float(field.get('scale', 1.0))
-        scaleoffset = float(field.get('scaleoffset', 0.0))
+        info = self._get_field_info(entity, field)
+        address = info['addresses'][slice if slice is not None else 0]
+        start = info['start']
+        bits = info['bits']
+        format = info['format']
+        unit = info['unit']
+        scale = info['scale']
+        scaleoffset = info['scaleoffset']
         #errorFlag = 
         #invertFlag = 
         raw = (register_word >> start) & ((1 << bits) -1)
