@@ -143,6 +143,8 @@ class XmlDb(object):
         '''
         if type(element) == str:
             element = self._get_single_element_by_name_attr_prefer_field(entity, element)
+        if element.tag == 'field' and element.get('name'):
+            return [element.get('name')]
         fields = element.findall(".//field[@name]")
         return [field.get('name') for field in fields]
 
@@ -157,6 +159,8 @@ class XmlDb(object):
             register_blocks += [(base_address + i*stepsize, size) for i in range(slices or 1)]
         else:
             for child in element:
+                if child.tag not in self.ENTITY_TAGS:
+                    continue
                 register_blocks += self._determine_continuous_register_blocks(entity, child)
         return register_blocks
 
