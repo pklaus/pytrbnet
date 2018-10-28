@@ -111,7 +111,7 @@ class XmlDb(object):
             element = self._get_single_element_by_name_attr_prefer_field(entity, element)
         base_address = 0
         slices = None
-        size = int(element.get('size', 1))
+        size = int(element.get('size', '1'))
         stepsize = 0
         node = element
         while node.tag in self.ENTITY_TAGS:
@@ -120,7 +120,7 @@ class XmlDb(object):
             repeat = int(node.get('repeat', 1))
             if repeat != 1:
                 slices = repeat
-                stepsize = int(node.get('size', 0), 10)
+                stepsize = int(node.get('size', '0'), 10)
             node = node.getparent()
         return (base_address, slices, stepsize, size)
 
