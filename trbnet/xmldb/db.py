@@ -217,7 +217,7 @@ class XmlDb(object):
             fmt = '0x{:0%dx}' % ((bits+3)/4)
             value['python'] = raw
             value['string'] = fmt.format(raw)
-        elif format == 'integer':
+        elif format in ('integer', 'signed'):
             val = round(scale * raw + scaleoffset)
             value['python'] = val
             value['string'] = str(val)
@@ -249,7 +249,11 @@ class XmlDb(object):
             value['string'] = fmt.format(raw)
         else:
             raise NotImplementedError('format: ' + format)
-        if value['unicode'] is None: value['unicode'] = value['string']
+        if value['unicode'] is None:
+            value['unicode'] = value['string']
+        if unit:
+            value['string'] += ' ' + unit
+            value['unicode'] += ' ' + unit
         identifier = self._get_field_identifier(entity, field_name, trb_address, slice=slice)
         hierarchy = self._get_field_hierarchy(entity, field)
         context = {
