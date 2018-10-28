@@ -26,6 +26,7 @@ class XmlDb(object):
         self.folder = folder
         self._cache_xml_docs = {}
         self._cache_elements = {}
+        self._cache_field_hierarchy = {}
 
     def _get_xml_doc(self, entity):
         # Try to fetch xmldoc from cache and return it:
@@ -171,13 +172,21 @@ class XmlDb(object):
         return identifier
 
     def _get_field_hierarchy(self, entity, field):
+        # Try to fetch the field hierarchy from the cache and return it:
+        key = (entity, field)
+        if key in self._cache_field_hierarchy:
+            return self._cache_field_hierarchy[key]
+        # Otherwise, construct the hierarchy by walking up the tree from the
+        # to the top level XML entity and add it to the cache:
         stack = []
         node = field
         while node.tag in self.ENTITY_TAGS:
             stack.append(node.get('name'))
             if node.tag == self.TOP_ENTITY: break
             node = node.getparent()
-        return list(reversed(stack))
+        hierarchy = list(reversed(stack))
+        self._cache_field_hierarchy[key] = hierarchy
+        return hierarchy
 
     def convert_field(self, entity, field_name, register_word, trb_address=0xffff, slice=None):
         field = self.find_field(entity, field_name)
