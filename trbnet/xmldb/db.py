@@ -27,6 +27,7 @@ class XmlDb(object):
         self._cache_xml_docs = {}
         self._cache_elements = {}
         self._cache_field_hierarchy = {}
+        self._cache_field_info = {}
 
     def _get_xml_doc(self, entity):
         # Try to fetch xmldoc from cache and return it:
@@ -189,6 +190,11 @@ class XmlDb(object):
         return hierarchy
 
     def _get_field_info(self, entity, field):
+        # Try to fetch the field info from the cache and return it:
+        key = (entity, field)
+        if key in self._cache_field_info:
+            return self._cache_field_info[key]
+        # Otherwise, construct the field info by reading in its XML information
         if type(field) == str:
             field = self.find_field(entity, field)
         info = {
@@ -202,6 +208,7 @@ class XmlDb(object):
           #'errorFlag': ,
           #'invertFlag': ,
         }
+        self._cache_field_info[key] = info
         return info
 
     def convert_field(self, entity, field_name, register_word, trb_address=0xffff, slice=None):
