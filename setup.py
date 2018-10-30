@@ -27,6 +27,7 @@ setup(name='trbnet',
           'trbnet.core',
           'trbnet.xmldb',
           'trbnet.util',
+          'trbnet.epics',
           ],
       entry_points = {
           'console_scripts': [
