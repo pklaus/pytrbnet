@@ -179,6 +179,8 @@ class XmlDb(object):
             return self._cache_field_hierarchy[key]
         # Otherwise, construct the hierarchy by walking up the tree from the
         # to the top level XML entity and add it to the cache:
+        if type(field) == str:
+            field = self.find_field(entity, field)
         stack = []
         node = field
         while node.tag in self.ENTITY_TAGS:
