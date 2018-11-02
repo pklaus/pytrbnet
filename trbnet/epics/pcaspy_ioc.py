@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import time, threading
+import time, threading, logging
 
 from trbnet.core import TrbNet, TrbException
 from trbnet.xmldb import XmlDb
@@ -9,7 +9,18 @@ from trbnet.util.trbcmd import _xmlget as xmlget
 from pcaspy import Driver, SimpleServer, Alarm, Severity
 from pcaspy.driver import manager
 
+from .helpers import SeenBeforeFilter
+
 t = TrbNet()
+
+logger = logging.getLogger('trbnet.epics.pcaspy_ioc')
+logging.basicConfig(
+    format="[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+restr_func = lambda log: log[2].startswith('register missing')
+logger.addFilter(SeenBeforeFilter(restriction_func=restr_func))
+
 
 class TrbNetIOC(object):
 
@@ -54,7 +65,7 @@ class PvdbManager(object):
 
     def initialize(self, subscriptions):
         for trb_address, entity, name, responding_endpoints in subscriptions:
-            for data in xmlget(trb_address, entity, name):
+            for data in xmlget(trb_address, entity, name, logger=logger):
                 self._pvdb[data['context']['identifier']] = {
                   'type': TYPE_MAPPING[data['format']][0],
                   'unit': data['unit'],
@@ -89,7 +100,7 @@ class TrbNetIocDriver(Driver):
         while True:
             for subscription in self.subscriptions:
                 trb_address, entity, element, responding_endpoints = subscription
-                for data in xmlget(trb_address, entity, element):
+                for data in xmlget(trb_address, entity, element, logger=logger):
                     reason = data['context']['identifier']
                     try:
                         self.pvDB[reason].mask = 0
@@ -97,7 +108,7 @@ class TrbNetIocDriver(Driver):
                         self.setParam(reason, data['value'][TYPE_MAPPING[data['format']][1]])
                         manager.pvs[self.port][reason].updateValue(self.pvDB[reason])
                     except Exception as e:
-                        print("ERROR: " + str(e))
+                        logger.error(str(e))
 
             # if the process was suspended, reset last_time:
             if time.time() - last_time > self.scan_period:
