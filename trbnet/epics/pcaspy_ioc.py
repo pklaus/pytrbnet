@@ -2,8 +2,9 @@
 
 import time, threading
 
-from trbnet.core import TrbNet
+from trbnet.core import TrbNet, TrbException
 from trbnet.xmldb import XmlDb
+from trbnet.util.trbcmd import _xmlget as xmlget
 
 from pcaspy import Driver, SimpleServer, Alarm, Severity
 from pcaspy.driver import manager
@@ -44,6 +45,7 @@ class TrbNetIOC(object):
         while True:
             # process CA transactions
             server.process(0.1)
+
 
 class PvdbManager(object):
 
@@ -119,35 +121,3 @@ TYPE_MAPPING = {
     #'binary': ('char', 'string'),
     'binary': ('int', 'raw'),
 }
-
-def xmlget(trb_address, entity, name):
-    db = XmlDb()
-    register_blocks = db._determine_continuous_register_blocks(entity, name)
-    all_data = {} # dictionary with {'reg_address': {'trb_address': int, ...}, ...}
-    for start, size in register_blocks:
-        if size > 1:
-            response = t.register_read_mem(trb_address, start, 0, size)
-            for response_trb_address, data in response.items():
-                if not data:
-                    continue
-                for reg_address, word in enumerate(data, start=start):
-                    if reg_address not in all_data:
-                         all_data[reg_address] = {}
-                    all_data[reg_address][response_trb_address] = word
-        else:
-            reg_address = start
-            response = t.register_read(trb_address, reg_address)
-            for response_trb_address, word in response.items():
-                if reg_address not in all_data:
-                    all_data[reg_address] = {}
-                all_data[reg_address][response_trb_address] = word
-    for field_name in db._contained_fields(entity, name):
-        reg_addresses = db._get_all_element_addresses(entity, field_name)
-        slices = len(reg_addresses)
-        for slice, reg_address in enumerate(reg_addresses):
-            if reg_address not in all_data:
-                print("Error:  field_name:", field_name, "with register address:", reg_address, "not found in fetched data")
-                continue
-            for response_trb_address, value in all_data[reg_address].items():
-                data = db.convert_field(entity, field_name, value, trb_address=response_trb_address, slice=slice if slices > 1 else None)
-                yield data
