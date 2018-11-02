@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
-import click, time
-from trbnet import TrbNet
+import click, time, logging
+from trbnet import TrbNet, TrbException
 from trbnet.xmldb import XmlDb
 
 t = TrbNet()
+logger = logging.getLogger('trbnet.util.trbcmd')
 
 ### Definition of a Python API to the functions later exposed by the CLI
 
@@ -26,13 +27,20 @@ def _xmlentry(entity, name):
     for count, reg_address in enumerate(reg_addresses, start=1):
         print("slice", count, "address:", hex(reg_address))
 
-def _xmlget(trb_address, entity, name):
+def _xmlget(trb_address, entity, name, logger=logger):
     db = XmlDb()
     register_blocks = db._determine_continuous_register_blocks(entity, name)
     all_data = {} # dictionary with {'reg_address': {'trb_address': int, ...}, ...}
     for start, size in register_blocks:
         if size > 1:
-            response = t.register_read_mem(trb_address, start, 0, size)
+            try:
+                response = t.register_read_mem(trb_address, start, 0, size)
+            except TrbException as e:
+                if logger: logger.error("TRB Error happened: %s -- Continuing anyways.", repr(e))
+                continue
+            except Exception as e:
+                if logger: logger.error("Other error happened: %s -- Continuing anyways.", repr(e))
+                continue
             for response_trb_address, data in response.items():
                 if not data:
                     continue
@@ -42,7 +50,14 @@ def _xmlget(trb_address, entity, name):
                     all_data[reg_address][response_trb_address] = word
         else:
             reg_address = start
-            response = t.register_read(trb_address, reg_address)
+            try:
+                response = t.register_read(trb_address, reg_address)
+            except TrbException as e:
+                if logger: logger.error("TRB Error happened: %s -- Continuing anyways.", repr(e))
+                continue
+            except Exception as e:
+                if logger: logger.error("Other error happened: %s -- Continuing anyways.", repr(e))
+                continue
             for response_trb_address, word in response.items():
                 if reg_address not in all_data:
                     all_data[reg_address] = {}
@@ -52,12 +67,12 @@ def _xmlget(trb_address, entity, name):
         slices = len(reg_addresses)
         for slice, reg_address in enumerate(reg_addresses):
             if reg_address not in all_data:
-                print("Error:  field_name:", field_name, "with register address:", reg_address, "not found in fetched data")
+                fmt = "register missing in response: %s (addr 0x%04x)"
+                if logger: logger.warning(fmt, field_name, reg_address)
                 continue
             for response_trb_address, value in all_data[reg_address].items():
                 data = db.convert_field(entity, field_name, value, trb_address=response_trb_address, slice=slice if slices > 1 else None)
-                #print(data)
-                print("{context[identifier]} {value[unicode]} {unit}".format(**data))
+                yield data
 
 ### Definition of the CLI with the help of the click package:
 
@@ -108,7 +123,8 @@ def xmlentry(entity, name):
 @click.argument('name')
 def xmlget(trb_address, entity, name):
     click.echo('Querying xml register entry from TrbNet')
-    _xmlget(trb_address, entity, name)
+    for data in _xmlget(trb_address, entity, name):
+        print("{context[identifier]} {value[unicode]} {unit}".format(**data))
 
 if __name__ == '__main__':
     cli()
