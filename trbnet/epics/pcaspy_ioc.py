@@ -43,7 +43,7 @@ class TrbNetIOC(object):
     def all_pvs(self):
         if not self._initialized:
             raise NameError("Please run .initialize() first")
-        return [pv for pv in self._pvdb.keys()]
+        return [self.prefix + pv for pv in self._pvdb.keys()]
 
     def run(self):
         if not self._initialized:
