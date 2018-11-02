@@ -1,11 +1,19 @@
 #!/usr/bin/env python
 
 import click, time, logging
-from trbnet import TrbNet, TrbException
+from trbnet import TrbNet, TrbException, TrbError
 from trbnet.xmldb import XmlDb
 
 t = TrbNet()
 logger = logging.getLogger('trbnet.util.trbcmd')
+
+### Helpers
+
+def _status_warning():
+    if t.trb_errno() == TrbError.TRB_STATUS_WARNING:
+        return "Status-Bit(s) have been set:\n" + t.trb_termstr(t.trb_term())
+    else:
+        return None
 
 ### Definition of a Python API to the functions later exposed by the CLI
 
@@ -20,6 +28,8 @@ def _rm(trb_address, register, size, mode):
     for endpoint in response:
         str_data = ' '.join('{:08X}'.format(word) for word in response[endpoint])
         print("endpoint 0x{:08X} responded with: {}".format(endpoint, str_data))
+    status_warning = _status_warning()
+    if status_warning: logger.warning(status_warning)
 
 def _xmlentry(entity, name):
     db = XmlDb()
