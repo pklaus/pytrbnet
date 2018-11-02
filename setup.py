@@ -39,6 +39,7 @@ setup(name='trbnet',
       platforms = 'Linux',
       install_requires = [
           "lxml",
+          "enum34", # for support of enum.IntEnum on Python < 3.4
       ],
       keywords = 'TrbNet PyTrbNet FPGA Low-latency network wrapper',
       classifiers = [
