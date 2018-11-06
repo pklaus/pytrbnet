@@ -34,8 +34,9 @@ def _rm(trb_address, register, size, mode):
 def _xmlentry(entity, name):
     db = XmlDb()
     reg_addresses = db._get_all_element_addresses(entity, name)
-    for count, reg_address in enumerate(reg_addresses, start=1):
-        print("slice", count, "address:", hex(reg_address))
+    for field_name in db._contained_fields(entity, name):
+        reg_addresses = db._get_all_element_addresses(entity, field_name)
+        yield {'entity': entity, 'field_name': field_name, 'reg_addresses': reg_addresses}
 
 def _xmlget(trb_address, entity, name, logger=logger):
     db = XmlDb()
@@ -125,7 +126,11 @@ def rm(trb_address, register, size, mode):
 @click.argument('name')
 def xmlentry(entity, name):
     click.echo('Searching xml register entry')
-    _xmlentry(entity, name)
+    for info in _xmlentry(entity, name):
+        slices = len(info['reg_addresses'])
+        info['reg_addresses'] = ', '.join('0x{:04x}'.format(addr) for addr in info['reg_addresses'])
+        info['slices'] = ' (%d slices)' % slices if slices > 1 else ''
+        print("ENTITY: {entity:10s} FIELD: {field_name:20s} REGISTER(s): {reg_addresses} {slices}".format(**info))
 
 @cli.command()
 @click.argument('trb_address', type=BASED_INT)
