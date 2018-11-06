@@ -31,6 +31,14 @@ class TrbNetIOC(object):
         self._pvdb = {}
         self._pvdb_manager = None
 
+    def before_initialization(func):
+       def func_wrapper(self, *args, **kwargs):
+           if self._initialized:
+               raise NameError('Cannot use the method .%s() after running .initialize().' % func.__name__)
+           return func(self, *args, **kwargs)
+       return func_wrapper
+
+    @before_initialization
     def add_subscription(self, trb_address, entity, name, responding_endpoints=None):
         self._subscriptions.append((trb_address, entity, name, responding_endpoints))
 
