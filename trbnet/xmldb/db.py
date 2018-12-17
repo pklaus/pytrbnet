@@ -199,6 +199,7 @@ class XmlDb(object):
         # Otherwise, construct the field info by reading in its XML information
         if type(field) == str:
             field = self.find_field(entity, field)
+        field_name = field.get('name')
         info = {
           'addresses': self._get_all_element_addresses(entity, field),
           'start': int(field.get('start', 0)),
@@ -207,15 +208,23 @@ class XmlDb(object):
           'unit': field.get('unit', ''),
           'scale': float(field.get('scale', 1.0)),
           'scaleoffset': float(field.get('scaleoffset', 0.0)),
+          'meta': {}
           #'errorFlag': ,
           #'invertFlag': ,
         }
+        if info['format'] == 'enum':
+            results = field.findall("enumItem")
+            choices = {}
+            for result in results:
+                choices[int(result.get('value'))] = result.text
+            info['meta']['choices'] = choices
+            DynamicEnum = enum.Enum(field_name, {v: k for k, v in choices.items()})
+            info['meta']['enum'] = DynamicEnum
         self._cache_field_info[key] = info
         return info
 
     def convert_field(self, entity, field_name, register_word, trb_address=0xffff, slice=None):
-        field = self.find_field(entity, field_name)
-        info = self._get_field_info(entity, field)
+        info = self._get_field_info(entity, field_name)
         address = info['addresses'][slice if slice is not None else 0]
         start = info['start']
         bits = info['bits']
@@ -223,10 +232,10 @@ class XmlDb(object):
         unit = info['unit']
         scale = info['scale']
         scaleoffset = info['scaleoffset']
+        meta = info['meta']
         #errorFlag = 
         #invertFlag = 
         raw = (register_word >> start) & ((1 << bits) -1)
-        meta = {}
         value = {
             'raw': raw,
             'string': raw,
@@ -261,11 +270,7 @@ class XmlDb(object):
             value['python'] = val
             value['string'] = str(val).lower()
         elif format == 'enum':
-            meta['choices'] = {}
-            results = field.findall("enumItem")
-            for result in results:
-                meta['choices'][int(result.get('value'))] = result.text
-            DynamicEnum = enum.Enum(field_name, {v: k for k, v in meta['choices'].items()})
+            DynamicEnum = meta['enum']
             if raw in meta['choices']:
                 value['python'] = DynamicEnum(raw)
                 value['string'] = meta['choices'][raw]
@@ -290,7 +295,7 @@ class XmlDb(object):
             value['string'] += ' ' + unit
             value['unicode'] += ' ' + unit
         identifier = self._get_field_identifier(entity, field_name, trb_address, slice=slice)
-        hierarchy = self._get_field_hierarchy(entity, field)
+        hierarchy = self._get_field_hierarchy(entity, field_name)
         context = {
           'address': address,
           'identifier': identifier,
