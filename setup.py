@@ -15,7 +15,7 @@ except (ImportError, IOError, RuntimeError) as e:
     LDESC = ''
 
 setup(name='trbnet',
-      version = '0.1.dev0',
+      version = '1.0.dev0',
       description = 'Interface to TrbNet (wrapping libtrbnet.so with ctypes)',
       long_description = LDESC,
       author = 'Philipp Klaus',
