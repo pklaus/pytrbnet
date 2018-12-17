@@ -4,7 +4,7 @@ import time, threading, logging
 
 from trbnet.core import TrbNet, TrbException
 from trbnet.xmldb import XmlDb
-from trbnet.util.trbcmd import _xmlget as xmlget
+from trbnet.util.trbcmd import _xmlget as xmlget, _xmlentry as xmlentry
 
 from pcaspy import Driver, SimpleServer, Alarm, Severity
 from pcaspy.driver import manager
@@ -12,6 +12,7 @@ from pcaspy.driver import manager
 from .helpers import SeenBeforeFilter
 
 t = TrbNet()
+db = XmlDb()
 
 logger = logging.getLogger('trbnet.epics.pcaspy_ioc')
 logging.basicConfig(
@@ -30,6 +31,7 @@ class TrbNetIOC(object):
         self._subscriptions = []
         self._pvdb = {}
         self._pvdb_manager = None
+        self._expected_trb_addresses = {}
 
     def before_initialization(func):
        def func_wrapper(self, *args, **kwargs):
@@ -39,11 +41,15 @@ class TrbNetIOC(object):
        return func_wrapper
 
     @before_initialization
-    def add_subscription(self, trb_address, entity, name, responding_endpoints=None):
-        self._subscriptions.append((trb_address, entity, name, responding_endpoints))
+    def add_subscription(self, trb_address, entity, name):
+        self._subscriptions.append((trb_address, entity, name))
+
+    @before_initialization
+    def add_expected_trb_addresses(self, send_to_trb_address, answer_from_trb_addresses):
+        self._expected_trb_addresses[send_to_trb_address] = answer_from_trb_addresses
 
     def initialize(self):
-        self._pvdb_manager = PvdbManager(self._pvdb)
+        self._pvdb_manager = PvdbManager(self._pvdb, self._expected_trb_addresses)
         self._pvdb_manager.initialize(self._subscriptions)
         self._initialized = True
 
@@ -68,26 +74,41 @@ class TrbNetIOC(object):
 
 class PvdbManager(object):
 
-    def __init__(self, pvdb):
+    def __init__(self, pvdb, expected_trb_addresses):
         self._pvdb = pvdb
+        self._expected_trb_addresses = expected_trb_addresses
+
+    def _add(self, identifier, definition):
+        self._pvdb[identifier] = {
+          'type': TYPE_MAPPING[definition['format']][0],
+          'unit': definition['unit'],
+        }
+        if definition['format'] == 'enum':
+            choices = definition['meta']['choices']
+            vals = list(choices.keys())
+            min_val, max_val = min(vals), max(vals)
+            enums = []
+            for i in range(max_val+1):
+                enums.append(choices[i] if i in choices else 'n/a')
+            self._pvdb[identifier]['enums'] = enums
+        if definition['format'] == 'boolean' and TYPE_MAPPING[definition['format']][0] == 'enum':
+            self._pvdb[identifier]['enums'] = ['false', 'true']
 
     def initialize(self, subscriptions):
-        for trb_address, entity, name, responding_endpoints in subscriptions:
-            for data in xmlget(trb_address, entity, name, logger=logger):
-                self._pvdb[data['context']['identifier']] = {
-                  'type': TYPE_MAPPING[data['format']][0],
-                  'unit': data['unit'],
-                }
-                if data['format'] == 'enum':
-                    choices = data['meta']['choices']
-                    vals = list(choices.keys())
-                    min_val, max_val = min(vals), max(vals)
-                    enums = []
-                    for i in range(max_val+1):
-                        enums.append(choices[i] if i in choices else 'n/a')
-                    self._pvdb[data['context']['identifier']]['enums'] = enums
-                if data['format'] == 'boolean' and TYPE_MAPPING[data['format']][0] == 'enum':
-                    self._pvdb[data['context']['identifier']]['enums'] = ['false', 'true']
+        for trb_address, entity, name in subscriptions:
+            if trb_address in self._expected_trb_addresses:
+                answer_from_trb_addresses = self._expected_trb_addresses[trb_address]
+                for info in xmlentry(entity, name):
+                    slices = len(info['reg_addresses'])
+                    for slice in range(slices):
+                        slice = slice if slices > 1 else None
+                        for answer_from_trb_address in answer_from_trb_addresses:
+                            identifier = db._get_field_identifier(entity, info['field_name'], answer_from_trb_address, slice=slice)
+                            definition = db._get_field_info(entity, info['field_name'])
+                            self._add(identifier, definition)
+            else:
+                for data in xmlget(trb_address, entity, name, logger=logger):
+                    self._add(data['context']['identifier'], data)
 
 class TrbNetIocDriver(Driver):
 
@@ -107,7 +128,7 @@ class TrbNetIocDriver(Driver):
         last_time = time.time()
         while True:
             for subscription in self.subscriptions:
-                trb_address, entity, element, responding_endpoints = subscription
+                trb_address, entity, element = subscription
                 for data in xmlget(trb_address, entity, element, logger=logger):
                     reason = data['context']['identifier']
                     try:
