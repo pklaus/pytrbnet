@@ -20,7 +20,7 @@ def _find_lib(inp_lib_name):
 
     # Test 3: look for library in LD_LIBRARY_PATH with ctypes.util
     import ctypes.util
-    dllpath = ctypes.util._findLib_ld(inp_lib_name)
+    dllpath = ctypes.util._findLib_ld(inp_lib_name) if hasattr(ctypes.util, '_findLib_ld') else None
     if dllpath is not None:
         return dllpath
 
