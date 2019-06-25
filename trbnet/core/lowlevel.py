@@ -91,6 +91,9 @@ class _TrbNet(object):
         self.trblib.trb_register_read_mem.argtypes = [ctypes.c_uint16, ctypes.c_uint16, ctypes.c_uint8, ctypes.c_uint16,
                                                       ctypes.POINTER(ctypes.c_uint32), ctypes.c_uint]
         self.trblib.trb_register_read_mem.restype = ctypes.c_int
+        self.trblib.trb_register_write_mem.argtypes = [ctypes.c_uint16, ctypes.c_uint16, ctypes.c_uint8,
+                                                      ctypes.POINTER(ctypes.c_uint32), ctypes.c_uint16]
+        self.trblib.trb_register_read_mem.restype = ctypes.c_int
         self.trblib.trb_registertime_read_mem.argtypes = [ctypes.c_uint16, ctypes.c_uint16, ctypes.c_uint8, ctypes.c_uint16,
                                                           ctypes.POINTER(ctypes.c_uint32), ctypes.c_uint]
         self.trblib.trb_registertime_read_mem.restype = ctypes.c_int
@@ -202,6 +205,27 @@ class _TrbNet(object):
             raise TrbException('Error while reading trb register memory.',
                                errno, self.trb_errorstr(errno))
         return [data_array[i] for i in range(status)]
+
+    def trb_register_write_mem(self, trb_address, reg_address, option, values, size):
+        '''
+        Write several trb registers
+
+        Arguments:
+        trb_address -- node(s) to write to
+        reg_address -- register address
+        option -- write option, 0 = write same register several times 1 = write adjacent registers
+        values -- list of values to write to register(s)
+        '''
+
+        data_array = (ctypes.c_uint32 * len(values))(*values)
+        trb_address = ctypes.c_uint16(trb_address)
+        reg_address = ctypes.c_uint16(reg_address)
+        option = ctypes.c_uint8(option)
+        size = ctypes.c_uint16(len(values))
+        status = self.trblib.trb_register_write_mem(trb_address, reg_address, option, data_array, size)
+        if status == -1:
+            errno = self.trb_errno()
+            raise TrbException('Error while writing trb register memory.', errno, self.trb_errorstr(errno))
 
     def trb_read_uid(self, trb_address):
         '''
