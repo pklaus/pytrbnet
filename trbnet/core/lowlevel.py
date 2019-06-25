@@ -304,7 +304,7 @@ class _TrbNet(object):
         trb_address = ctypes.c_uint16(trb_address)
         reg_address = ctypes.c_uint16(reg_address)
         option = ctypes.c_uint8(option)
-        status = self.trblib.trb_register_read_mem(trb_address, reg_address, option, ctypes.c_uint16(size), data_array, ctypes.c_uint(self.buffersize))
+        status = self.trblib.trb_registertime_read_mem(trb_address, reg_address, option, ctypes.c_uint16(size), data_array, ctypes.c_uint(self.buffersize))
         if status == -1:
             errno = self.trb_errno()
             raise TrbException('Error while reading trb register memory.', errno, self.trb_errorstr(errno))
