@@ -41,20 +41,23 @@ Python with their lowercase variants
 `libtrbnet`, `daqopserver`, and `trb3_server` upon
 instantiating the TrbNet() class.
 
-Examples:
+Here's an example using environment variables in the shell:
 
 
-    # Using environment variables
-    export LIBTRBNET=/local/gitrepos/trbnettools/trbnetd/libtrbnet.so
-    export DAQOPSERVER=jspc55.x-matter.uni-frankfurt.de:1
-    export XMLDB=~/phd/workrepos/daqtools/xml-db/database
+```sh
+# Setting the relevant environment variables
+export LIBTRBNET=/local/gitrepos/trbnettools/trbnetd/libtrbnet.so
+export DAQOPSERVER=jspc55.x-matter.uni-frankfurt.de:1
+export XMLDB=~/phd/workrepos/daqtools/xml-db/database
 
-    # example call to get the value in the compile time
-    # register for all reachable TRBs:
-    trbcmd.py xmlget 0xffff TrbNet CompileTime
+# example call to get the value in the compile time
+# register for all reachable TRBs:
+trbcmd.py xmlget 0xffff TrbNet CompileTime
 
-    # Here, you could also run some Python code and
-    # and instantiate TrbNet() without any keyword arguments.
+# With the environment variables set, you could also
+# run Python and nstantiate TrbNet(). It would
+# pick up the settings from the exported variables.
+```
 
 or by setting the variables from within Python:
 
