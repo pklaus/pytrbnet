@@ -1,6 +1,7 @@
 # PyTrbNet
 
-This is a Python package wrapping libtrbnet.so.
+This is a Python package wrapping libtrbnet.so
+from trbnettools.
 It allows accessing trbnet registers from Python.
 
 The package comes with two additional features:
@@ -48,7 +49,7 @@ Here's an example using environment variables in the shell:
 # Setting the relevant environment variables
 export LIBTRBNET=/local/gitrepos/trbnettools/trbnetd/libtrbnet.so
 export DAQOPSERVER=jspc55.x-matter.uni-frankfurt.de:1
-export XMLDB=~/phd/workrepos/daqtools/xml-db/database
+export XMLDB=/local/gitrepos/daqtools/xml-db/database
 
 # example call to get the value in the compile time
 # register for all reachable TRBs:
