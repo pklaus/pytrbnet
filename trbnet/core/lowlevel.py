@@ -205,14 +205,16 @@ class _TrbNet(object):
         trb_address = ctypes.c_uint16(trb_address)
         reg_address = ctypes.c_uint16(reg_address)
         option = ctypes.c_uint8(option)
-        status = self.trblib.trb_register_read_mem(trb_address, reg_address, option, ctypes.c_uint16(size), data_array, ctypes.c_uint(self.buffersize))
+        size = ctypes.c_uint16(size)
+        dsize = ctypes.c_uint(self.buffersize)
+        status = self.trblib.trb_register_read_mem(trb_address, reg_address, option, size, data_array, dsize)
         if status == -1:
             errno = self.trb_errno()
             raise TrbException('Error while reading trb register memory.',
                                errno, self.trb_errorstr(errno))
         return [data_array[i] for i in range(status)]
 
-    def trb_register_write_mem(self, trb_address: int, reg_address: int, option: int, values: List[int], size: int):
+    def trb_register_write_mem(self, trb_address: int, reg_address: int, option: int, values: List[int], size: int = None):
         '''
         Write several trb registers
 
@@ -227,7 +229,7 @@ class _TrbNet(object):
         trb_address = ctypes.c_uint16(trb_address)
         reg_address = ctypes.c_uint16(reg_address)
         option = ctypes.c_uint8(option)
-        size = ctypes.c_uint16(len(values))
+        size = size or ctypes.c_uint16(len(values))
         status = self.trblib.trb_register_write_mem(trb_address, reg_address, option, data_array, size)
         if status == -1:
             errno = self.trb_errno()
@@ -330,11 +332,13 @@ class _TrbNet(object):
                                                 bitmask, bitvalue)
 
     def trb_registertime_read_mem(self, trb_address: int, reg_address: int, option: int, size: int) -> List[int]:
-        data_array = (ctypes.c_uint32 * self.buffersize)()
         trb_address = ctypes.c_uint16(trb_address)
         reg_address = ctypes.c_uint16(reg_address)
         option = ctypes.c_uint8(option)
-        status = self.trblib.trb_registertime_read_mem(trb_address, reg_address, option, ctypes.c_uint16(size), data_array, ctypes.c_uint(self.buffersize))
+        size = ctypes.c_uint16(size)
+        data_array = (ctypes.c_uint32 * self.buffersize)()
+        dsize = ctypes.c_uint(self.buffersize)
+        status = self.trblib.trb_registertime_read_mem(trb_address, reg_address, option, size, data_array, dsize)
         if status == -1:
             errno = self.trb_errno()
             raise TrbException('Error while reading trb register memory.', errno, self.trb_errorstr(errno))
@@ -346,16 +350,18 @@ class _TrbNet(object):
         trg_random = ctypes.c_uint8(trg_random)
         trg_number = ctypes.c_uint16(trg_number)
         data_array = (ctypes.c_uint32 * self.buffersize)()
-        status = self.trblib.trb_ipu_data_read(trg_type, trg_info, trg_random, trg_number, data_array, ctypes.c_uint(self.buffersize))
+        dsize = ctypes.c_uint(self.buffersize)
+        status = self.trblib.trb_ipu_data_read(trg_type, trg_info, trg_random, trg_number, data_array, dsize)
         if status == -1:
             errno = self.trb_errno()
             raise TrbException('Error while reading trb ipu data.', errno, self.trb_errorstr(errno))
         return [data_array[i] for i in range(status)]
 
-    def trb_nettrace(self, trb_address: int, size: int):
+    def trb_nettrace(self, trb_address: int):
         trb_address = ctypes.c_uint16(trb_address)
         data_array = (ctypes.c_uint32 * self.buffersize)()
-        status = self.trblib.trb_nettrace(trb_address, data_array, ctypes.c_uint(self.buffersize))
+        dsize = ctypes.c_uint(self.buffersize)
+        status = self.trblib.trb_nettrace(trb_address, data_array, dsize)
         if status == -1:
             errno = self.trb_errno()
             raise TrbException('Error while doing net trace.', errno, self.trb_errorstr(errno))
