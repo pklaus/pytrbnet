@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from typing import List, Tuple, Dict
+
 from .lowlevel import _TrbNet
 
 
@@ -7,18 +9,18 @@ class TrbNet(_TrbNet):
     High level wrapper providing utility functions for the TrbNet class
     '''
 
-    def register_read(self, trb_address, reg_address):
+    def register_read(self, trb_address: int, reg_address: int) -> Dict[int, int]:
         lin_data = super().trb_register_read(trb_address, reg_address)
         if (len(lin_data) % 2) != 0:
             raise ValueError("len(lin_data) == %d -  expected a multiple of %d" % (len(lin_data), 2))
         result = self._get_dynamic_trb_address_dict(lin_data, force_length=1)
         return {key: value[0] for key, value in result.items()}
 
-    def register_read_mem(self, trb_address, reg_address, option, size):
+    def register_read_mem(self, trb_address: int, reg_address: int, option: int, size: int) -> Dict[int, List[int]]:
         lin_data = super().trb_register_read_mem(trb_address, reg_address, option, size)
         return self._get_dynamic_trb_address_dict(lin_data)
 
-    def read_uid(self, trb_address):
+    def read_uid(self, trb_address: int) -> Dict[Tuple[int, int], int]:
         '''
         Read unique id of TrbNet nodes
 
@@ -35,7 +37,7 @@ class TrbNet(_TrbNet):
         uid_dict = {((r[0] << 32) + r[1], r[2]): r[3] for r in responses}
         return uid_dict
 
-    def _get_dynamic_trb_address_dict(self, lin_data, force_length=0):
+    def _get_dynamic_trb_address_dict(self, lin_data: List[int], force_length: int = 0) -> Dict[int, List[int]]:
         """
         A utility function to structure response data from the
         trb_register_read() and trb_register_read_mem() functions.
@@ -58,7 +60,7 @@ class TrbNet(_TrbNet):
             offset += length
         return trb_address_responses
 
-    def register_write(self, trb_address, reg_address, value):
+    def register_write(self, trb_address: int, reg_address: int, value: int):
         """
         Convenience wrapper for trb_register_write()
         """
