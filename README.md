@@ -56,7 +56,7 @@ export XMLDB=/local/gitrepos/daqtools/xml-db/database
 trbcmd.py xmlget 0xffff TrbNet CompileTime
 
 # With the environment variables set, you could also
-# run Python and nstantiate TrbNet(). It would
+# run Python and instantiate TrbNet(). It would
 # pick up the settings from the exported variables.
 ```
 
@@ -95,8 +95,8 @@ The TrbNet() class has the following methods:
 * `register_write(trb_address, reg_address, value)`
 * `register_read_mem(trb_address, reg_address, option, size)`
 * `read_uid(trb_address)`
-* `trb_set_address(uid, endpoint, trb_address)`
-* and some more less frequently used methods (found in the source code of [trbnet/core/lowlevel.py](trbnet/core/lowlevel.py)).
+* Furthermore, multiple methods starting with `trb_` (e.g. `trb_set_address(uid, endpoint, trb_address)`)
+  can be called as they are inherited from [the parent class `_TrbNet`][trbnet/core/lowlevel.py].
 
 ### Usage of the Terminal Utility trbcmd.py
 
@@ -131,3 +131,5 @@ trbcmd.py xmlget 0xffff TrbNet       CompileTime
 
 * [The TRB Website](http://trb.gsi.de)
 * [TrbNet Manual](http://jspc29.x-matter.uni-frankfurt.de/docu/trbnetdocu.pdf)
+
+[trbnet/core/lowlevel.py]: https://github.com/pklaus/pytrbnet/blob/master/trbnet/core/lowlevel.py

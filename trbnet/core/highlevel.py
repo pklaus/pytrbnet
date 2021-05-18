@@ -57,3 +57,9 @@ class TrbNet(_TrbNet):
             trb_address_responses[trb_address] = lin_data[offset:offset+length]
             offset += length
         return trb_address_responses
+
+    def register_write(self, trb_address, reg_address, value):
+        """
+        Convenience wrapper for trb_register_write()
+        """
+        super().trb_register_write(trb_address, reg_address, value)
